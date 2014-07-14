@@ -1,1 +1,2 @@
 Send2Trash
+py.test
