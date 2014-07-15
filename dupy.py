@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Dupy: Find and remove duplicate files.
-# file: dupy.py
-# author: Adam Schwartz
-# created: 2014-07-14 12:11:32
+"""
+Dupy: Find and remove duplicate files.
+file: dupy.py
+author: Adam Schwartz
+created: 2014-07-14 12:11:32
 
-# Based on Sebastien Sauvage's doublesdetector.py
-# http://sebsauvage.net/python/doublesdetector.py
+Based on Sebastien Sauvage's doublesdetector.py
+http://sebsauvage.net/python/doublesdetector.py
+"""
 
 import os.path
 from os import stat
@@ -39,10 +41,10 @@ def detect_doubles(directories):
     # Group all files by size (in the fileslist dictionary)
     for directory in directories:
         directory = os.path.abspath(directory)
-        print('Scanning directory '+directory+'...')
+        scan_msg = 'Scanning directory '+directory+'...'
         os.path.walk(directory, callback, fileslist)
 
-    print('Comparing files...')
+    comp_msg = 'Comparing files...'
     # Remove keys (filesize) in the dictionnary which have only 1 file
     for (filesize, listoffiles) in fileslist.items():
         if len(listoffiles) == 1:
@@ -54,6 +56,7 @@ def detect_doubles(directories):
     while len(fileslist) > 0:
         (filesize, listoffiles) = fileslist.popitem()
         for filepath in listoffiles:
+            # print '.' (progress update)
             sha = fileSHA(filepath)
             if sha in filessha:
                 filessha[sha].append(filepath)
@@ -66,10 +69,12 @@ def detect_doubles(directories):
     for (sha, listoffiles) in filessha.items():
         if len(listoffiles) == 1:
             del filessha[sha]
-    return filessha
+    # return list of hashes and progress messages
+    return [filessha, (scan_msg, comp_msg)]
 
 
 def callback(fileslist, directory, files):
+    # print '.' (progress update)
     for fileName in files:
         filepath = os.path.join(directory, fileName)
         if os.path.isfile(filepath):
@@ -80,18 +85,22 @@ def callback(fileslist, directory, files):
                 fileslist[filesize] = [filepath]
 
 
-dir_one = 'tests/one'
-dir_two = 'tests/two'
-dir_three = 'tests/three'
-dirs = [dir_one, dir_two]
-
-
 def get_dups(dir_list):
-    doubles = detect_doubles(dir_list)
+    doubles_result = detect_doubles(dir_list)
+    doubles = doubles_result[0]
+    progress = doubles_result[1]
+
+    print progress[0], '\n', progress[1]
+
     for dir in dir_list:
         dir_index = dir_list.index(dir)
         print '\nThe following files are identical:'
         print [doubles[filesha] for filesha in doubles.keys()][dir_index]
 
+# Get these directories as input from a dialogue box
+dir_one = 'tests/one'
+dir_two = 'tests/two'
+dir_three = 'tests/three'
+dirs = [dir_one, dir_two]
 
 get_dups(dirs)
