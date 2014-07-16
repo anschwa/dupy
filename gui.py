@@ -9,89 +9,103 @@ class Dupy(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        self.resize(600, 400)
         # self.center()
-
         self.setGeometry(1400, 250, 500, 400)  # set for development
-
         self.setAcceptDrops(True)
+        self.setWindowTitle('Dupy')
 
-        # Active Directories
-        self.addButton = QtGui.QPushButton("Add a directory")
-        self.addButton.clicked.connect(self.dirDialog)
-
-        descLable = QtGui.QLabel("...or drag and drop one into this window.")
-
-        self.clearButton = QtGui.QPushButton("Clear")
-        self.clearButton.clicked.connect(self.clearDirs)
-        self.clearButton.hide()
-
-        self.pathEdit = QtGui.QTextEdit()
-        self.pathEdit.setReadOnly(True)
-        self.pathEdit.setMaximumHeight(100)
-        self.pathEdit.hide()
-
-        # Find Duplicates
-        self.findButton = QtGui.QPushButton("Find Duplicates")
-        self.findButton.hide()
-
-        # Duplicate Results
-        self.allLable = QtGui.QLabel('All Results')
-        self.allLable.hide()
-
-        self.oneLable = QtGui.QLabel('dir one Results')
-        self.oneLable.hide()
-
-        self.resultsEdit = QtGui.QTextEdit()
-        self.resultsEdit.setReadOnly(True)
-        self.resultsEdit.hide()
-
-        # Initial Layout
+        # Layout
         hbox = QtGui.QHBoxLayout(self)
 
-        leftSide = QtGui.QFrame(self)
-        rightSide = QtGui.QFrame(self)
+        self.leftSide = QtGui.QFrame(self)
+        self.leftLayout()
+
+        self.rightSide = QtGui.QFrame(self)
+        self.rightLayout()
+
         splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
-        splitter.addWidget(leftSide)
-        splitter.addWidget(rightSide)
+        splitter.addWidget(self.leftSide)
+        splitter.addWidget(self.rightSide)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 3)
 
-        # Left Side Layout
-        leftGrid = QtGui.QGridLayout()
-        leftGrid.setSpacing(10)
-
-        leftGrid.addWidget(self.addButton, 2, 0)
-        leftGrid.addWidget(descLable, 2, 1)
-
-        leftGrid.addWidget(self.pathEdit, 3, 0, 1, 2)
-        leftGrid.addWidget(self.clearButton, 4, 0)
-
-        leftSide.setLayout(leftGrid)
-
-        # Left Side Layout
-        rightGrid = QtGui.QGridLayout()
-        rightGrid.setSpacing(10)
-
-        rightGrid.addWidget(self.findButton, 1, 0)
-        rightGrid.addWidget(self.allLable, 2, 0)
-        rightGrid.addWidget(self.oneLable, 2, 1)
-        rightGrid.addWidget(self.resultsEdit, 3, 0)
-
-        rightSide.setLayout(rightGrid)
-
-        # Set Parent Layout
         hbox.addWidget(splitter)
         self.setLayout(hbox)
 
-        self.setWindowTitle('Dupy')
-        self.show()
+    def leftLayout(self):
+        # Elements
+        empty = QtGui.QLabel("")  # empty elements can be useful
 
-    def mainLayout(self):
-        self.pathEdit.show()
-        self.clearButton.show()
-        self.findButton.show()
-        self.allLable.show()
-        self.oneLable.show()
-        self.resultsEdit.show()
+        addButton = QtGui.QPushButton("Add a directory")
+        addLabel = QtGui.QLabel("...or drag and drop one here.")
+        addLabel.setAlignment(QtCore.Qt.AlignCenter)
+
+        pathList = QtGui.QListWidget()
+        pathList.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        pathList.addItem('/path/to/test/')
+        pathList.setMaximumHeight(125)
+
+        removeButton = QtGui.QPushButton("Remove")
+        clearButton = QtGui.QPushButton("Clear")
+
+        # Layout
+        leftGrid = QtGui.QGridLayout()
+        leftGrid.setSpacing(10)
+
+        leftGrid.addWidget(addButton, 1, 0, 1, 2)
+        leftGrid.addWidget(addLabel, 2, 0, 1, 2)
+        leftGrid.addWidget(pathList, 3, 0, 1, 2)
+        leftGrid.addWidget(removeButton, 4, 0)
+        leftGrid.addWidget(clearButton, 4, 1)
+
+        # take up remaining space with an empty label
+        leftGrid.addWidget(empty, 5, 0, 1000, 2)  # this is kind of a bug
+
+        self.leftSide.setLayout(leftGrid)
+
+    def rightLayout(self):
+        # Elements
+        empty = QtGui.QLabel("")  # empty elements can be useful
+
+        findButton = QtGui.QPushButton("Find duplicates")
+        resultCombo = QtGui.QComboBox()
+        resultCombo.addItem("All")
+        resultCombo.addItem("Dir One")
+        resultCombo.addItem("Dir Two")
+
+        resultEdit = QtGui.QTextEdit()
+        resultEdit.setReadOnly(True)
+
+        self.resultList = QtGui.QListWidget()
+        self.resultList.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection)
+
+        items = ['Item %s' % (i + 1)
+                 for i in xrange(10)]
+        self.resultList.addItems(items)
+
+        self.trashButton = QtGui.QPushButton("Move to trash")
+        self.trashButton.clicked.connect(self.selectedResults)
+
+        # Layout
+        rightGrid = QtGui.QGridLayout()
+        rightGrid.setSpacing(10)
+
+        rightGrid.addWidget(findButton, 0, 0)
+        rightGrid.addWidget(resultCombo, 1, 0)
+        rightGrid.addWidget(self.resultList, 2, 0, 1, 5)
+        rightGrid.addWidget(self.trashButton, 3, 4)
+
+        # adjust layout with an empty label
+        rightGrid.addWidget(empty, 0, 1, 1, 4)
+        rightGrid.addWidget(empty, 1, 1, 1, 4)
+        rightGrid.addWidget(empty, 3, 0, 1, 4)
+
+        self.rightSide.setLayout(rightGrid)
+
+    def selectedResults(self):
+        selected =  self.resultList.selectedItems()
+        print [item.text() for item in selected]
 
     def center(self):
         qr = self.frameGeometry()
@@ -99,46 +113,11 @@ class Dupy(QtGui.QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def dirDialog(self):
-        title = self.addButton.text()
-        dialogueDir = QtGui.QFileDialog.getExistingDirectory(self, title)
-        self.pathEdit.append(dialogueDir)
-        self.mainLayout()
-
-    def clearDirs(self):
-        self.pathEdit.setText("")
-
-    # drag-and-drop directories into dupy
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.accept()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-
-            for url in event.mimeData().urls():
-                drop_path = str(url.toLocalFile())
-                self.pathEdit.append(drop_path)  # add path to textbox
-                self.mainLayout()  # show the main layout
-            self.emit(QtCore.SIGNAL("dropped"))
-        else:
-            event.ignore()
-
 
 def main():
     app = QtGui.QApplication(argv)
-    name = Dupy()
+    window = Dupy()
+    window.show()
     exit(app.exec_())
 
 
