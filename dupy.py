@@ -8,6 +8,10 @@ created: 2014-07-14 12:11:32
 
 Based on Sebastien Sauvage's doublesdetector.py
 http://sebsauvage.net/python/doublesdetector.py
+
+Usage:
+    dirs = ['tests/one', 'tests/two']
+    get_dups(dirs)
 """
 
 import os.path
@@ -90,17 +94,6 @@ def get_dups(dir_list):
     doubles = doubles_result[0]
     progress = doubles_result[1]
 
-    print progress[0], '\n', progress[1]
-
-    for dir in dir_list:
-        dir_index = dir_list.index(dir)
-        print '\nThe following files are identical:'
-        print [doubles[filesha] for filesha in doubles.keys()][dir_index]
-
-# Get these directories as input from a dialogue box
-dir_one = 'tests/one'
-dir_two = 'tests/two'
-dir_three = 'tests/three'
-dirs = [dir_one, dir_two]
-
-get_dups(dirs)
+    big_dups = [doubles[filesha] for filesha in doubles.keys()]
+    map(lambda x: x.append(''), big_dups)  # add empty item to each sublist
+    return [item for subitem in big_dups for item in subitem]

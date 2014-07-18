@@ -1,5 +1,6 @@
 from sys import exit, argv
 from PySide import QtGui, QtCore
+import dupy
 
 
 class Dupy(QtGui.QWidget):
@@ -76,13 +77,16 @@ class Dupy(QtGui.QWidget):
 
         # take up remaining space with an empty label
         leftGrid.addWidget(empty, 5, 0, 1, 2)
-        leftGrid.addWidget(empty, 7, 0, 1000, 2)  # this is kind of a bug
+        leftGrid.addWidget(empty, 7, 0, 1000, 2)  # this is kind of a hack
 
         self.leftSide.setLayout(leftGrid)
 
     def rightLayout(self):
         # Elements
         empty = QtGui.QLabel("")  # empty elements can be useful
+
+        resultLabel = QtGui.QLabel("The following files are identical:")
+        resultLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         self.resultCombo = QtGui.QComboBox()
         self.resultCombo.addItem("All")
@@ -94,10 +98,6 @@ class Dupy(QtGui.QWidget):
         self.resultList.setSelectionMode(
             QtGui.QAbstractItemView.ExtendedSelection)
 
-        items = ['Item %s' % (i + 1)
-                 for i in xrange(10)]
-        self.resultList.addItems(items)
-
         self.trashButton = QtGui.QPushButton("Move to trash")
         self.trashButton.clicked.connect(self.trashEvent)
 
@@ -105,13 +105,14 @@ class Dupy(QtGui.QWidget):
         rightGrid = QtGui.QGridLayout()
         rightGrid.setSpacing(10)
 
-        rightGrid.addWidget(self.resultCombo, 0, 0, 1, 5)
-        rightGrid.addWidget(self.resultList, 1, 0, 1, 5)
-        rightGrid.addWidget(self.trashButton, 2, 4)
+        rightGrid.addWidget(resultLabel, 0, 0, 1, 5)
+        rightGrid.addWidget(self.resultCombo, 1, 0, 1, 5)
+        rightGrid.addWidget(self.resultList, 2, 0, 1, 5)
+        rightGrid.addWidget(self.trashButton, 3, 4)
 
         # adjust layout with an empty label
         # rightGrid.addWidget(empty, 0, 1, 1, 4)
-        rightGrid.addWidget(empty, 2, 0, 1, 4)
+        rightGrid.addWidget(empty, 3, 0, 1, 4)
 
         self.rightSide.setLayout(rightGrid)
 
@@ -121,13 +122,20 @@ class Dupy(QtGui.QWidget):
 
         self.updateCombo()
 
+        # Find Duplicate Files
+        dups = dupy.get_dups(self.getPaths())
+        self.resultList.addItems(dups)
+
     def updateCombo(self):
         # Add directories to the combo box
+        dirs = self.getPaths()
+        self.resultCombo.addItems(dirs)
+
+    def getPaths(self):
         paths = []
         for i in xrange(self.pathList.count()):
             paths.append(self.pathList.item(i))
-        dirs = [path.text().encode("utf-8") for path in paths]
-        self.resultCombo.addItems(dirs)
+        return [path.text().encode("utf-8") for path in paths]
 
     def trashEvent(self):
         reply = QtGui.QMessageBox.question(self, 'Message',
