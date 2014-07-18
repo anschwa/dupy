@@ -45,10 +45,10 @@ def detect_doubles(directories):
     # Group all files by size (in the fileslist dictionary)
     for directory in directories:
         directory = os.path.abspath(directory)
-        scan_msg = 'Scanning directory '+directory+'...'
+        # scan_msg = 'Scanning directory '+directory+'...'
         os.path.walk(directory, callback, fileslist)
 
-    comp_msg = 'Comparing files...'
+    # comp_msg = 'Comparing files...'
     # Remove keys (filesize) in the dictionnary which have only 1 file
     for (filesize, listoffiles) in fileslist.items():
         if len(listoffiles) == 1:
@@ -74,7 +74,7 @@ def detect_doubles(directories):
         if len(listoffiles) == 1:
             del filessha[sha]
     # return list of hashes and progress messages
-    return [filessha, (scan_msg, comp_msg)]
+    return filessha
 
 
 def callback(fileslist, directory, files):
@@ -90,10 +90,12 @@ def callback(fileslist, directory, files):
 
 
 def get_dups(dir_list):
-    doubles_result = detect_doubles(dir_list)
-    doubles = doubles_result[0]
-    progress = doubles_result[1]
+    doubles = detect_doubles(dir_list)
 
     big_dups = [doubles[filesha] for filesha in doubles.keys()]
+
+    map(lambda n: n.insert(0, 'The following files are identical:'), big_dups)
     map(lambda x: x.append(''), big_dups)  # add empty item to each sublist
+
+    # flatten / merge the nested list
     return [item for subitem in big_dups for item in subitem]

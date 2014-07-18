@@ -1,5 +1,7 @@
+import os.path
 from sys import exit, argv
 from PySide import QtGui, QtCore
+from send2trash import send2trash
 import dupy
 
 
@@ -89,7 +91,7 @@ class Dupy(QtGui.QWidget):
         resultLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         self.resultCombo = QtGui.QComboBox()
-        self.resultCombo.addItem("All")
+        self.resultCombo.activated.connect(self.updateResultList)
 
         resultEdit = QtGui.QTextEdit()
         resultEdit.setReadOnly(True)
@@ -105,39 +107,75 @@ class Dupy(QtGui.QWidget):
         rightGrid = QtGui.QGridLayout()
         rightGrid.setSpacing(10)
 
-        rightGrid.addWidget(resultLabel, 0, 0, 1, 5)
-        rightGrid.addWidget(self.resultCombo, 1, 0, 1, 5)
-        rightGrid.addWidget(self.resultList, 2, 0, 1, 5)
-        rightGrid.addWidget(self.trashButton, 3, 4)
+        rightGrid.addWidget(self.resultCombo, 0, 0, 1, 5)
+        rightGrid.addWidget(self.resultList, 1, 0, 1, 5)
+        rightGrid.addWidget(self.trashButton, 2, 4)
 
         # adjust layout with an empty label
         # rightGrid.addWidget(empty, 0, 1, 1, 4)
-        rightGrid.addWidget(empty, 3, 0, 1, 4)
+        rightGrid.addWidget(empty, 2, 0, 1, 4)
 
         self.rightSide.setLayout(rightGrid)
 
     def findDups(self):
+        self.resultList.clear()
+
         self.rightSide.show()
         self.resize(800, 400)
 
         self.updateCombo()
 
         # Find Duplicate Files
-        dups = dupy.get_dups(self.getPaths())
+        dirs = self.getAllItems(self.pathList)
+        dups = dupy.get_dups(dirs)
         self.resultList.addItems(dups)
 
     def updateCombo(self):
+        self.resultCombo.clear()
+        # rebuild combo box
+        self.resultCombo.addItem('All')
         # Add directories to the combo box
-        dirs = self.getPaths()
+        dirs = self.getAllItems(self.pathList)
         self.resultCombo.addItems(dirs)
 
-    def getPaths(self):
-        paths = []
-        for i in xrange(self.pathList.count()):
-            paths.append(self.pathList.item(i))
-        return [path.text().encode("utf-8") for path in paths]
+    def updateResultList(self):
+        selected_path = self.resultCombo.currentText()
+        selected_dir = os.path.dirname(selected_path)
+        files = self.getAllItems(self.resultList)
+
+        if selected_path == 'All':
+            self.findDups()
+        else:
+            self.resultList.clear()
+            for file in files:
+                if os.path.dirname(file) == selected_dir:
+                    self.resultList.addItem(file)
+
+    def getAllItems(self, listWidget):
+        items = []
+        for i in xrange(listWidget.count()):
+            items.append(listWidget.item(i))
+        return [item.text().encode("utf-8") for item in items]
 
     def trashEvent(self):
+        # Elements
+        hbox = QtGui.QHBoxLayout()
+
+        # set up progress bar
+        self.pbar = QtGui.QProgressBar()
+        self.pbar.setRange(0, 0)
+
+        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton.clicked.connect(self.cancelTrash)
+
+        # Layout
+        hbox.addWidget(self.pbar)
+        # hbox.addWidget(self.cancelButton)
+
+        self.bottom.setLayout(hbox)
+        self.bottom.show()
+
+        # Confirmation Dialog
         reply = QtGui.QMessageBox.question(self, 'Message',
                                            "Are you sure you want to move "
                                            "these files to the trash?",
@@ -148,32 +186,25 @@ class Dupy(QtGui.QWidget):
         if reply == QtGui.QMessageBox.Yes:
             self.moveToTrash()
         else:
-            pass
+            self.bottom.hide()
 
     def moveToTrash(self):
-        self.bottom.show()
-
         selected = self.resultList.selectedItems()
-        items = [item.text().encode("utf-8") for item in selected]
+        files = [item.text().encode("utf-8") for item in selected]
 
-        # Elements
-        hbox = QtGui.QHBoxLayout()
-
-        self.pbar = QtGui.QProgressBar()
-        self.pbar.setGeometry(30, 40, 200, 25)
-        self.pbar.setMinimum(0)
-        self.pbar.setMaximum(100)
-        # set progress bar status
-        self.pbar.setValue(75)
-
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.cancelButton.clicked.connect(self.cancelTrash)
-
-        # Layout
-        hbox.addWidget(self.pbar)
-        hbox.addWidget(self.cancelButton)
-
-        self.bottom.setLayout(hbox)
+        # Start moving files to the trash
+        for file in files:
+            if file == '':
+                files.remove(file)
+            elif file == 'The following files are identical:':
+                files.remove(file)
+            else:
+                # move file to trash
+                send2trash(file)
+        # Hide progress bar once finished
+        self.bottom.hide()
+        # refresh the list
+        self.findDups()
 
     def cancelTrash(self):
         # stop sending files to trash and stop progress bar
