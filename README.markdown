@@ -8,6 +8,12 @@ Find and remove duplicate files.
 ![main interface]()
 ![send to trash]()
 
+# Dependancies
+To run dupy you need the following python packages:
+
+- [PySide](https://pypi.python.org/pypi/PySide)
+- [Send2Trash](https://pypi.python.org/pypi/Send2Trash)
+
 # Credits
 
 Dupy is based on [Sebastien Sauvage's](http://sebsauvage.net/python/) [doublesdetector.py](http://sebsauvage.net/python/doublesdetector.py)
