@@ -5,8 +5,8 @@ Find and remove duplicate files.
 
 # Screenshots
 
-![main interface]()
-![send to trash]()
+![main interface](https://raw.githubusercontent.com/daschwa/dupy/master/screenshots/one.png)
+![send to trash](https://raw.githubusercontent.com/daschwa/dupy/master/screenshots/two.png)
 
 # Dependancies
 To run dupy you need the following python packages:
