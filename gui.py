@@ -12,9 +12,9 @@ class Dupy(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        # self.resize(500, 400)
-        # self.center()
-        self.setGeometry(1400, 250, 500, 400)  # set for development
+        self.resize(500, 400)
+        self.center()
+        #self.setGeometry(1400, 250, 500, 400)  # set for development
         self.setAcceptDrops(True)
         self.setWindowTitle('Dupy')
 
