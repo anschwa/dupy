@@ -3,6 +3,11 @@ Dupy
 
 Find and remove duplicate files.
 
+# Screenshots
+
+![main interface]()
+![send to trash]()
+
 # Credits
 
 Dupy is based on [Sebastien Sauvage's](http://sebsauvage.net/python/) [doublesdetector.py](http://sebsauvage.net/python/doublesdetector.py)
